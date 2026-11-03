@@ -1,0 +1,19 @@
+
+  EcoServe AI - starting
+
+  Loaded 10000 sales records from restaurant_sales_data.csv
+  Created 15 inventory items
+  Loaded pre-computed model results (15 comparison results)
+  [OK] Database       sqlite
+  [OK] Sales data     10000 records
+  [OK] Demo account   
+  [OK] Model results  15 model comparison results
+  [OK] Web interface  
+
+  EcoServe AI is running at http://127.0.0.1:5050/
+  Login: manager@restaurant.com / password123
+  Keep this window open while using the app. Press Ctrl+C to stop.
+
+
+ EcoServe AI has stopped.
+Press any key to continue . . . 

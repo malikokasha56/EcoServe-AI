@@ -1,0 +1,8 @@
+node_modules/
+backend/.venv/
+backend/venv/
+backend/instance/
+backend/.env
+__pycache__/
+*.pyc
+.playwright-mcp/

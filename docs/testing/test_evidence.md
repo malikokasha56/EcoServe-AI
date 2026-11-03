@@ -1,0 +1,97 @@
+# Test Evidence
+
+Generated automatically by the test suite (`python -m pytest`) on 2026-10-19 15:34.
+90 tests, 90 recorded checks: 90 passed, 0 failed, 0 skipped.
+
+| Test ID | Requirement | Test | Input | Expected result | Observed result | Result |
+|---|---|---|---|---|---|---|
+| T-01 | NFR-01 | Health check reports a ready system on SQLite with the shipped results | GET /api/health on a new database | status ok, engine sqlite, 10,000 sales records, results loaded | status ok, engine sqlite, 10000 records, 15 results | Pass |
+| T-02 | NFR-01 | The web application code imports no machine learning library | Scan imports of 19 runtime modules | no ML library imported | none imported | Pass |
+| T-03 | FR-01 | A new account can be registered | POST /api/auth/register user-a99ccdfe@example.com, 11-character password | 201 with a session token | 201, token present | Pass |
+| T-04 | FR-01, NFR-04 | Invalid or duplicate registrations are rejected | POST /api/auth/register {'email': '', 'password': 'longenough1'} | 400 with a message | 400: Email and password are required | Pass |
+| T-05 | FR-01, NFR-04 | Invalid or duplicate registrations are rejected | POST /api/auth/register {'email': 'short@example.com', 'password': 'short'} | 400 with a message | 400: Password must be at least 8 characters | Pass |
+| T-06 | FR-01, NFR-04 | Invalid or duplicate registrations are rejected | POST /api/auth/register {'email': 'manager@restaurant.com', 'password': 'longenough1'} | 409 with a message | 409: An account with this email already exists | Pass |
+| T-07 | FR-01, NFR-04 | Two people with the same name can both register (only the email must be unique) | Register two accounts named Sam Lee with different emails | 201 and 201 | [201, 201] | Pass |
+| T-08 | FR-02 | The demo account can sign in | POST /api/auth/login with the demo credentials | 200 with token and user | 200, user manager@restaurant.com | Pass |
+| T-09 | FR-02 | A wrong password is rejected | POST /api/auth/login with a wrong password | 401 'Invalid email or password' | 401: Invalid email or password | Pass |
+| T-10 | FR-03 | Application data requires a signed-in user | GET /api/dashboard/summary without a token | 401 | 401 | Pass |
+| T-11 | FR-03 | Application data requires a signed-in user | GET /api/sales without a token | 401 | 401 | Pass |
+| T-12 | FR-03 | Application data requires a signed-in user | GET /api/forecast without a token | 401 | 401 | Pass |
+| T-13 | FR-03 | Application data requires a signed-in user | GET /api/simulation without a token | 401 | 401 | Pass |
+| T-14 | FR-03 | Application data requires a signed-in user | GET /api/recommendations without a token | 401 | 401 | Pass |
+| T-15 | FR-03 | Application data requires a signed-in user | GET /api/waste/overview without a token | 401 | 401 | Pass |
+| T-16 | FR-03 | Application data requires a signed-in user | GET /api/reports without a token | 401 | 401 | Pass |
+| T-17 | NFR-03 | Passwords are stored only as bcrypt hashes | Read the stored password of the demo account | bcrypt hash ($2b$...), not the plain password | $2b$12$... | Pass |
+| T-18 | NFR-03 | An expired session token is rejected | GET /api/dashboard/summary with a token that expired 5 s ago | 401 'Session expired' | 401: Session expired, please sign in again | Pass |
+| T-19 | NFR-03 | A token close to expiry is renewed while the user is active | GET /api/auth/me with a token expiring in 5 min, then a new 30 min token | renewed token only for the expiring one | expiring: True, fresh: False | Pass |
+| T-20 | NFR-03 | Sessions are configured to expire after 30 minutes | Read JWT_ACCESS_TOKEN_EXPIRES | 30 minutes | 0:30:00 | Pass |
+| T-21 | FR-04 | A sale can be recorded on the latest trading day | POST /api/sales 3 x Laksa at $12.50 on 2025-01-01 | 201, revenue 37.50 | 201, revenue 37.5 | Pass |
+| T-22 | FR-04, NFR-04 | Invalid sales entries are rejected with a message | POST /api/sales [{'name': 'Laksa', 'quantity': 1}] | 400 with a message | 400: Request body must be a JSON object | Pass |
+| T-23 | FR-04, NFR-04 | Invalid sales entries are rejected with a message | POST /api/sales {'items': ['Laksa']} | 400 with a message | 400: Each item must be an object with a name and a quantity | Pass |
+| T-24 | FR-04, NFR-04 | Invalid sales entries are rejected with a message | POST /api/sales {'items': []} | 400 with a message | 400: At least one item is required | Pass |
+| T-25 | FR-04, NFR-04 | Invalid sales entries are rejected with a message | POST /api/sales {'items': [{'name': 'Laksa', 'quantity': 'two'}]} | 400 with a message | 400: quantity must be a number | Pass |
+| T-26 | FR-04, NFR-04 | Invalid sales entries are rejected with a message | POST /api/sales {'items': [{'name': 'Laksa', 'quantity': -1}]} | 400 with a message | 400: quantity must be at least 1 | Pass |
+| T-27 | FR-04, NFR-04 | Invalid sales entries are rejected with a message | POST /api/sales {'items': [{'name': '', 'quantity': 1}]} | 400 with a message | 400: Each item needs a name | Pass |
+| T-28 | FR-04, NFR-04 | Invalid sales entries are rejected with a message | POST /api/sales {'date': '2024-13-40', 'items': [{'name': 'Laksa', 'quantity': 1}]} | 400 with a message | 400: date must be YYYY-MM-DD | Pass |
+| T-29 | FR-05 | Sales history lists records and search filters them | GET /api/sales/history; GET /api/sales?search=Laksa | history rows; search returns only Laksa | 200 history rows; 100 results, all Laksa: True | Pass |
+| T-30 | FR-05 | The overview reports the latest day's sales | GET /api/sales/overview | latest date 2025-01-01, portions and revenue > 0 | 2025-01-01, 11275 portions, $149671.28 | Pass |
+| T-31 | FR-06 | A waste entry can be logged | POST /api/waste 1.5 kg Laksa, expired, $6 | 201, source manual | 201, source manual, 1.5 kg | Pass |
+| T-32 | FR-06, NFR-04 | Invalid waste entries are rejected with a message | POST /api/waste {'foodItem': '', 'quantity': 1} | 400 with a message | 400: Please select a food item | Pass |
+| T-33 | FR-06, NFR-04 | Invalid waste entries are rejected with a message | POST /api/waste {'foodItem': 'Laksa', 'quantity': 'x'} | 400 with a message | 400: Quantity must be a number | Pass |
+| T-34 | FR-06, NFR-04 | Invalid waste entries are rejected with a message | POST /api/waste {'foodItem': 'Laksa', 'quantity': 0} | 400 with a message | 400: Quantity must be greater than 0 | Pass |
+| T-35 | FR-06, NFR-04 | Invalid waste entries are rejected with a message | POST /api/waste {'foodItem': 'Laksa', 'quantity': 'nan'} | 400 with a message | 400: Quantity must be a finite number | Pass |
+| T-36 | FR-06, NFR-04 | Invalid waste entries are rejected with a message | POST /api/waste {'foodItem': 'Laksa', 'quantity': 'inf'} | 400 with a message | 400: Quantity must be a finite number | Pass |
+| T-37 | FR-06, NFR-04 | Invalid waste entries are rejected with a message | POST /api/waste ['Laksa', 1] | 400 with a message | 400: Request body must be a JSON object | Pass |
+| T-38 | FR-07, NFR-07 | Simulated overproduction and logged waste are reported separately | GET /api/waste/overview after logging one entry | separate 'estimated' (portions, labelled simulated) and 'logged' sections | estimated 98,733 portions (Simulated: Gradient boosting forecast x 1.10 minus actual sales); logged 1 entries | Pass |
+| T-39 | FR-08 | Both comparison tracks are served with metrics and significance tests | GET /api/forecast | Track A and B results with WAPE, R2, rolling WAPE and p-values | 9 Track A rows, 6 Track B rows; metrics True, rolling True, p-values True | Pass |
+| T-40 | FR-09 | Every daily model is evaluated on the same test days, after the training days | GET /api/forecast design | one test size for every model; train + test = 367 days | split 2024-10-20, train 293, test 74, n_test values {74} | Pass |
+| T-41 | FR-08, FR-09 | The leaked reference result is shown but never chosen as the best model | GET /api/forecast | one reference row, best Track A model is a real forecast | 1 reference row(s), best = Prophet (A2) | Pass |
+| T-42 | FR-10 | The simulation covers both plans for margins 0% to 20% | GET /api/simulation | 2 plans x 21 margins (0-20%), with assumptions | {'Gradient boosting': 21, 'Historical average rule': 21}, 7 assumptions | Pass |
+| T-43 | FR-10 | The headline comparison matches the 10% rows of the grid | GET /api/simulation, recompute the 10% reduction from the grid | 34.1% (from grid) | 34.1% (summary), CI 25.4 to 40.8 | Pass |
+| T-44 | FR-11 | A preparation plan exists for each test day and can be selected by date | GET /api/recommendations; then ?date=2024-12-01 | 74 test days; plan for the chosen day | 74 days; 11 items on 2024-12-01 | Pass |
+| T-45 | FR-11, NFR-04 | A date outside the test period is rejected | GET /api/recommendations?date=2023-01-01 | 400 with a message | 400: No preparation plan for that date (choose a test-period day) | Pass |
+| T-46 | FR-11 | A suggestion can be marked as applied | POST /api/recommendations/820/apply; then id 999999 | 200 status applied; then 404 | 200 applied; 404 | Pass |
+| T-47 | FR-12 | Unusual sales days are listed with the IQR bounds | GET /api/anomalies | 367 days analysed, flagged days with method, IQR bounds | 367 days, 5 flagged, bounds 828.8 to 14442.8 | Pass |
+| T-48 | FR-13 | Each report downloads as a CSV file | GET /api/reports/sales/download | 200 text/csv with a header and rows | 200 text/csv, 10001 rows | Pass |
+| T-49 | FR-13 | Each report downloads as a CSV file | GET /api/reports/waste/download | 200 text/csv with a header and rows | 200 text/csv, 833 rows | Pass |
+| T-50 | FR-13 | Each report downloads as a CSV file | GET /api/reports/forecast/download | 200 text/csv with a header and rows | 200 text/csv, 666 rows | Pass |
+| T-51 | FR-13 | Each report downloads as a CSV file | GET /api/reports/comparison/download | 200 text/csv with a header and rows | 200 text/csv, 15 rows | Pass |
+| T-52 | FR-13 | Each report downloads as a CSV file | GET /api/reports/simulation/download | 200 text/csv with a header and rows | 200 text/csv, 42 rows | Pass |
+| T-53 | FR-14 | The dashboard reports latest-day sales, best model error and simulated overproduction | GET /api/dashboard/summary | KPIs include ['Sales (latest day)', 'Best model error (WAPE)', 'Simulated overproduction']; 7-day trend | ['Sales (latest day)', 'Forecast (latest day)', 'Revenue (latest day)', 'Best model error (WAPE)', 'Simulated overproduction', 'Inventory health']; 7 days | Pass |
+| T-54 | FR-15, NFR-07 | Inventory is returned and flagged as illustrative | GET /api/inventory | items listed, illustrative = true with an explanation | 15 items, illustrative = True | Pass |
+| T-55 | FR-16 | Retraining is refused when the ML libraries are missing | POST /api/forecast/train with TensorFlow not installed | 409 explaining the missing library | 409: Retraining needs the machine learning libraries (tensorflow not instal... | Pass |
+| T-56 | FR-16 | A second retraining request is refused while one is running | POST /api/forecast/train twice (training process simulated) | first 200 starts one run; second 409 | 200, 409, runs started 1 | Pass |
+| T-57 | NFR-04 | Unknown endpoints and malformed parameters return 4xx JSON, not a server error | GET /api/does-not-exist | 404 or 400 JSON message | 404: Endpoint not found | Pass |
+| T-58 | NFR-04 | Unknown endpoints and malformed parameters return 4xx JSON, not a server error | POST /api/forecast/generate | 404 or 400 JSON message | 404: Endpoint not found | Pass |
+| T-59 | NFR-04 | Unknown endpoints and malformed parameters return 4xx JSON, not a server error | GET /api/sales?limit=abc | 404 or 400 JSON message | 400: limit must be a number | Pass |
+| T-60 | NFR-02 | Main requests respond within one second | GET /api/dashboard/summary (second request) | 200 in under 1000 ms | 200 in 14 ms | Pass |
+| T-61 | NFR-02 | Main requests respond within one second | GET /api/forecast (second request) | 200 in under 1000 ms | 200 in 36 ms | Pass |
+| T-62 | NFR-02 | Main requests respond within one second | GET /api/simulation (second request) | 200 in under 1000 ms | 200 in 3 ms | Pass |
+| T-63 | NFR-02 | Main requests respond within one second | GET /api/recommendations (second request) | 200 in under 1000 ms | 200 in 18 ms | Pass |
+| T-64 | NFR-02 | Main requests respond within one second | GET /api/waste/overview (second request) | 200 in under 1000 ms | 200 in 8 ms | Pass |
+| T-65 | NFR-02 | Main requests respond within one second | GET /api/anomalies (second request) | 200 in under 1000 ms | 200 in 9 ms | Pass |
+| T-66 | NFR-02 | Main requests respond within one second | GET /api/sales/history (second request) | 200 in under 1000 ms | 200 in 6 ms | Pass |
+| T-67 | NFR-07 | No API response contains an 'accuracy' figure | GET 7 endpoints and search for 'accuracy' | not found in any response | not found | Pass |
+| T-68 | NFR-05 | The CSV is the unmodified public Kaggle file | Size of restaurant_sales_data.csv | 1,304,756 bytes (size of the file published on Kaggle) | 1,304,756 bytes | Pass |
+| T-69 | NFR-05 | The dataset contains only sales, price, calendar and context fields | Read the CSV header | 13 known columns, none describing a person | 13 columns; personal fields: none | Pass |
+| T-70 | NFR-05 | The dataset source and licence are attributed in the application | GET /api/public/overview (no sign-in) | title, author, Kaggle URL and CC BY-SA 4.0 licence | Restaurant Sales Report 2024-2025 by Alexand Chen, CC BY-SA 4.0, https://www.kaggle.com/datasets/alexandchen/restaurant-sales-report-2024-2025 | Pass |
+| T-71 | FR-08, FR-09 | Stored item-level results: every learned model beats the historical-average rule | Read Track B results from data/results.json | all learned models below 40.1% WAPE with p < 0.05 | Linear regression 31.0%, Neural network (MLP) 25.8%, Random Forest 25.5%, Gradient boosting 24.9% | Pass |
+| T-72 | FR-08, NFR-07 | The result that used the realised record count is stored only as a flagged reference | Read reference rows from data/results.json | one row, info set 'reference', label says reference | ['Item-level RF summed per day (reference) (7.6% WAPE)'] | Pass |
+| T-73 | FR-10, NFR-07 | Every stored overproduction record is labelled as simulated | Read derived waste records from data/results.json | all labelled 'Simulated' | 832 records, 0 without the label | Pass |
+| T-74 | NFR-06 | MAE, RMSE, WAPE, MAPE and R2 match a hand calculation | actual [100, 200, 300], forecast [110, 190, 330] | {'mae': 16.667, 'rmse': 19.149, 'wape': 8.333, 'mape': 8.333, 'r2': 0.945} | {'mae': 16.667, 'rmse': 19.149, 'wape': 8.333, 'mape': 8.333, 'r2': 0.945} | Pass |
+| T-75 | NFR-06 | MAPE skips zero-demand days; WAPE is undefined when all demand is zero | actual [0, 100] vs [10, 90]; actual [0, 0] vs [1, 1] | MAPE 10.0 (zero day skipped); WAPE NaN | MAPE 10.0; WAPE nan | Pass |
+| T-76 | NFR-06, FR-08 | The Diebold-Mariano test separates a clearly better forecast and is symmetric | 74 days; errors sd 2 vs sd 15; then identical forecasts | p < 0.05, same p either way round, no test for identical forecasts | p = 3.50e-13, reversed 3.50e-13, identical -> None | Pass |
+| T-77 | NFR-06, FR-08 | Two equally good forecasts are usually not called different | 200 trials of two equally accurate forecasts | about 5% called significant (below 10%) | 4.0% | Pass |
+| T-78 | FR-09 | Daily models never receive the number of records per day | Build Track A inputs (A2) from toy sales | no record-count input; calendar + 4 covariates | 12 inputs, record-count inputs: none | Pass |
+| T-79 | FR-09 | Missing days become zero-demand days so the daily series is continuous | Toy sales on 1, 2, 3 and 5 January | 5 consecutive days, 4 January = 0 | 5 days, 4 January = 0.0 | Pass |
+| T-80 | FR-09 | The item-level history feature only uses days before the record (no leakage) | Sales of A on 1 Jan (10), 2 Jan (20, 40), 3 Jan (30), 5 Jan (50) | 2 Jan sees only 10; 3 Jan sees 10, 20, 40; 5 Jan sees all four earlier sales | {'01-02': (10.0, 1), '01-03': (23.33, 3), '01-05': (25.0, 4)} | Pass |
+| T-81 | FR-09 | Item-level training records all come before the test records | Split the real dataset at 2024-10-20 | last training day before first test day; 2,031 test records | train to 2024-10-19, test from 2024-10-20, 2031 test records | Pass |
+| T-82 | FR-09 | The mean baseline uses all demand up to the day before each forecast, like the other models | Demand 10, 20, 30, 40, 50, forecast days 4 and 5 | 20.0 (mean of 3 days) and 25.0 (mean of 4 days) | [20.0, 25.0] | Pass |
+| T-83 | FR-09, NFR-06 | At item level the significance test treats each test day as one observation | 600 records on 30 days, two similar forecasts | per day p value computed on 30 values | per record p = 1.68e-05, per day p = 3.85e-05 | Pass |
+| T-84 | FR-09, NFR-05 | Retraining uses only the public dataset, never sales typed into the application | Add a sale dated 1 October 2026 in the app, then load the pipeline input | 10,000 rows, all dated within the dataset period | 10,000 rows, last date 2025-01-01 | Pass |
+| T-85 | FR-09 | The seasonal naive baseline repeats the value from seven days earlier | Daily demand 0..19, forecast days 14-19 | 7, 8, 9, 10, 11, 12 | [7, 8, 9, 10, 11, 12] | Pass |
+| T-86 | FR-10, NFR-06 | Overproduction, shortfall, fill rate and costs match a hand calculation | demand [10, 20], forecast [10, 10], margin 10%, cost 2, price 5 | {'prepared': 22, 'overproduction': 1, 'shortfall': 9, 'fill_rate': 70, 'waste_cost': 2, 'lost_margin': 27} | {'prepared': 22.0, 'overproduction': 1.0, 'shortfall': 9.0, 'fill_rate': 70.0, 'waste_cost': 2.0, 'lost_margin': 27.0} | Pass |
+| T-87 | FR-10, NFR-06 | A larger margin never reduces overproduction or the share of demand served | 500 random records, margins 0% to 20% | overproduction and fill rate never decrease | overproduction 17,743 -> 41,326, fill 89.3% -> 94.4% | Pass |
+| T-88 | FR-10, NFR-06 | Running the simulation twice gives identical results, including confidence intervals | Run the same simulation twice | identical summaries | reduction 55.57% vs 55.57%, CI [42.893521458231085, 65.0387028285002] vs [42.893521458231085, 65.0387028285002] | Pass |
+| T-89 | FR-10 | The matched margin is the smallest that reaches the target share of demand served | demand 100, forecast 80, target 90% served | margin 12.5% (80 x 1.125 = 90) | margin 0.1250, served 90.00%, one step lower 89.80% | Pass |
+| T-90 | FR-12 | A clear outlier is flagged and the IQR bounds sit around Q1 and Q3 | 21 values from 90 to 110 and one value of 500 | only 500 flagged; bounds Q1 - 1.5 IQR and Q3 + 1.5 IQR | flagged [500]; bounds 79.50 to 121.50 (Q1 95.25, Q3 105.75) | Pass |
